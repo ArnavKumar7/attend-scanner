@@ -1,32 +1,31 @@
-import Head from 'next/head'
+import Head from "next/head";
 import React, { useState } from "react";
 import BarcodeScannerComponent from "@steima/react-qr-barcode-scanner";
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
-import axios from 'axios'
+import Image from "next/image";
+import { Inter } from "next/font/google";
+import styles from "@/styles/Home.module.css";
+import axios from "axios";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function Home() {
   const [data, setData] = React.useState("Not Found");
   const [qrscan, setqrscan] = useState();
-  const [stopStream, setStopStream] = React.useState(false)
-  const [details, setDetails] = React.useState(true)
+  const [stopStream, setStopStream] = React.useState(false);
+  const [details, setDetails] = React.useState(true);
   const [data1, setData1] = React.useState();
   //...
   const dismissQrReader = () => {
     // Stop the QR Reader stream (fixes issue where the browser freezes when closing the modal) and then dismiss the modal one tick later
-    setStopStream(true)
-
-  }
-
+    setStopStream(true);
+  };
 
   const [query, setQuery] = useState({
     SRN: "",
     name: "",
     phone: "",
-    email: ""
+    email: "",
   });
 
   const handleChange = () => (e) => {
@@ -34,10 +33,9 @@ export default function Home() {
     const value = e.target.value;
     setQuery((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: value,
     }));
-  }
-
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -51,34 +49,26 @@ export default function Home() {
       jsonObject[key] = value;
     }
 
-
     // console.log(query);
 
     axios
-      .post(
-        "http://165.22.223.181:5001/checkin",
-        jsonObject,
-        { headers: { Accept: "application/json" } }
-      )
+      .post(`${API_URL}/checkin`, jsonObject, {
+        headers: { Accept: "application/json" },
+      })
       .then(function (response) {
-
         setQuery({
           SRN: "",
           name: "",
           phone: "",
-          email: ""
+          email: "",
         });
 
-        setqrscan(response.data.QR)
-
-
-
+        setqrscan(response.data.QR);
       })
       .catch(function (error) {
         console.log(error);
       });
   };
-
 
   return (
     <>
@@ -96,73 +86,107 @@ export default function Home() {
           onSubmit={handleSubmit}
         >
           <label>SRN</label>
-          <input type="text" name="SRN" className="form-control" value={query.SRN} onChange={handleChange()}></input>
+          <input
+            type="text"
+            name="SRN"
+            className="form-control"
+            value={query.SRN}
+            onChange={handleChange()}
+          ></input>
           <br />
           <label>Name</label>
-          <input type="text" name="name" className="form-control" value={query.name} onChange={handleChange()}></input>
+          <input
+            type="text"
+            name="name"
+            className="form-control"
+            value={query.name}
+            onChange={handleChange()}
+          ></input>
           <br />
           <label>Email</label>
-          <input type="text" name="email" className="form-control" value={query.email} onChange={handleChange()}></input>
+          <input
+            type="text"
+            name="email"
+            className="form-control"
+            value={query.email}
+            onChange={handleChange()}
+          ></input>
           <br />
           <label>Phone</label>
-          <input type="text" name="phone" className="form-control" value={query.phone} onChange={handleChange()}></input>
+          <input
+            type="text"
+            name="phone"
+            className="form-control"
+            value={query.phone}
+            onChange={handleChange()}
+          ></input>
 
-
-          <button type="submit" className="btn btn-primary">Submit</button>
-
-
+          <button type="submit" className="btn btn-primary">
+            Submit
+          </button>
         </form>
-        {
+        {qrscan ? (
+          <a href={"data:image/jpg;base64," + qrscan} download="myimage">
+            <Image
+              id="imgElem"
+              src={"data:image/jpg;base64," + qrscan}
+              alt="Picture of the author"
+              width={200}
+              height={200}
+            ></Image>
+          </a>
+        ) : null}
 
-          qrscan ?
-            <a href={"data:image/jpg;base64," + qrscan} download="myimage"><Image id="imgElem" src={"data:image/jpg;base64," + qrscan} alt="Picture of the author" width={200} height={200}></Image></a> : null
-
-        }
-
-
-        {details ? <BarcodeScannerComponent
-          width={500}
-          height={500}
-          onUpdate={(err, result) => {
-            // console.log(err, result)
-            if (result) {
-
-              setStopStream(true)
-              axios.post(
-                "http://165.22.223.181:5001/info",
-                { "Token": result.text },
-                { headers: { Accept: "application/json" } }
-              ).then(resp => {
-                // console.log(resp)
-                setData1(resp.data.user)
-              })
-              setDetails(false)
-
-            }
-
-          }}
-          stopStream={stopStream}
-        /> : data1 ? <div>
-          <center>
-            <h2>{data1.SRN}</h2>
-            <h2>{data1.name}</h2>
-            <div>
-              {/* <label>Coffee1</label><input type="checkbox" checked={data1.meals.coffee1}></input> */}
-              <button disabled={data1.meals.coffee1} type="button">Coffee1</button>
-              <br />
-              <button disabled={data1.meals.coffee2} type="button">Coffee2</button>
-              <br />
-              <button disabled={data1.meals.coffee3} type="button">Coffee3</button>
-              <br />
-            </div>
-          </center>
-
-        </div> : null}
+        {details ? (
+          <BarcodeScannerComponent
+            width={500}
+            height={500}
+            onUpdate={(err, result) => {
+              // console.log(err, result)
+              if (result) {
+                setStopStream(true);
+                axios
+                  .post(
+                    `${API_URL}/info`,
+                    { Token: result.text },
+                    { headers: { Accept: "application/json" } }
+                  )
+                  .then((resp) => {
+                    // console.log(resp)
+                    setData1(resp.data.user);
+                  });
+                setDetails(false);
+              }
+            }}
+            stopStream={stopStream}
+          />
+        ) : data1 ? (
+          <div>
+            <center>
+              <h2>{data1.SRN}</h2>
+              <h2>{data1.name}</h2>
+              <div>
+                {/* <label>Coffee1</label><input type="checkbox" checked={data1.meals.coffee1}></input> */}
+                <button disabled={data1.meals.coffee1} type="button">
+                  Coffee1
+                </button>
+                <br />
+                <button disabled={data1.meals.coffee2} type="button">
+                  Coffee2
+                </button>
+                <br />
+                <button disabled={data1.meals.coffee3} type="button">
+                  Coffee3
+                </button>
+                <br />
+              </div>
+            </center>
+          </div>
+        ) : null}
         {/* {console.log(data1.meals)} */}
 
         <button onClick={dismissQrReader}>disable</button>
-
       </main>
     </>
-  )
+  );
 }
